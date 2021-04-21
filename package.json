@@ -1,0 +1,22 @@
+{
+  "name": "@guidesmiths/systemic-aws-sqs",
+  "version": "1.0.0",
+  "description": "A systemic component for AWS SQS service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guidesmiths/systemic-aws-sqs.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/guidesmiths/systemic-aws-sqs/issues"
+  },
+  "homepage": "https://github.com/guidesmiths/systemic-aws-sqs#readme",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.13.0"
+  }
+}
