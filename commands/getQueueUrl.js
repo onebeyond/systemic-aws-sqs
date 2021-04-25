@@ -12,7 +12,7 @@ module.exports = (client) => async ({ queueName, awsAccountId }) => {
 
   try {
     const data = await client.send(command);
-    return data;
+    return data.QueueUrl;
   } catch (error) {
     debug(`Error executing GetQueueUrlCommand: ${error.message}`);
     throw error;
