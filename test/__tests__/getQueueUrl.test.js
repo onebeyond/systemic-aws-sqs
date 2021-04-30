@@ -29,8 +29,8 @@ describe("Systemic sqs Component Tests", () => {
 
     const res = await sqs.getQueueUrl({
       queueName,
-      awsAccountId: awsAccountId,
+      awsAccountId,
     });
-    expect(res).toBe("http://localhost" + "/" + awsAccountId + "/" + queueName);
+    expect(res).toBe(`https://localhost/${awsAccountId}/${queueName}`);
   });
 });
