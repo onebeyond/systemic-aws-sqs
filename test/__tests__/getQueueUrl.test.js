@@ -1,36 +1,31 @@
-const { CreateQueueCommand } = require("@aws-sdk/client-sqs");
+const startSQSComponent = require('../helpers/startSQSComponent')
+const createSQSQueue = require('../helpers/createSQSQueue')
+const deleteSQSQueue = require('../helpers/deleteSQSQueue')
 
-const initSqs = require("../../index");
-
-const sqsComponent = initSqs();
+const getLocalstackConfig = require('../fixtures/getLocalstackConfig')
 
 let sqs;
+let createQueue;
+let deleteQueue;
 
 describe("Systemic sqs Component Tests", () => {
   beforeAll(async () => {
-    sqs = await sqsComponent.start({
-      config: {
-        region: "us-east-1",
-        endpoint: "http://localhost:4566",
-        credentials: {
-          secretAccessKey: "test",
-          accessKeyId: "test",
-        },
-      },
-    });
+    sqs = await startSQSComponent(getLocalstackConfig());
+    createQueue = createSQSQueue(sqs)
+    deleteQueue = deleteSQSQueue(sqs)
   });
-
-  // http --> https
 
   it("should return queue url", async () => {
     const awsAccountId = "000000000000";
     const queueName = "testQName";
-    await sqs.client.send(new CreateQueueCommand({ QueueName: queueName }));
+    await createQueue(queueName);
 
     const res = await sqs.getQueueUrl({
       queueName,
       awsAccountId,
     });
     expect(res).toBe(`https://localhost/${awsAccountId}/${queueName}`);
+
+    await deleteQueue(queueName);
   });
 });
