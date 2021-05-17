@@ -1,8 +1,8 @@
-const startSQSComponent = require('../helpers/startSQSComponent')
-const createSQSQueue = require('../helpers/createSQSQueue')
-const deleteSQSQueue = require('../helpers/deleteSQSQueue')
+const startSQSComponent = require("../helpers/startSQSComponent");
+const createSQSQueue = require("../helpers/createSQSQueue");
+const deleteSQSQueue = require("../helpers/deleteSQSQueue");
 
-const getLocalstackConfig = require('../fixtures/getLocalstackConfig')
+const getLocalstackConfig = require("../fixtures/getLocalstackConfig");
 
 let sqs;
 let createQueue;
@@ -11,8 +11,8 @@ let deleteQueue;
 describe("Systemic sqs Component Tests", () => {
   beforeAll(async () => {
     sqs = await startSQSComponent(getLocalstackConfig());
-    createQueue = createSQSQueue(sqs)
-    deleteQueue = deleteSQSQueue(sqs)
+    createQueue = createSQSQueue(sqs);
+    deleteQueue = deleteSQSQueue(sqs);
   });
 
   it("should return queue url", async () => {
