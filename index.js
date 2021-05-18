@@ -13,6 +13,7 @@ module.exports = () => {
     return {
       client,
       getQueueUrl: commands["getQueueUrl"](client),
+      sendMessage: commands["sendMessage"](client),
     };
   };
 

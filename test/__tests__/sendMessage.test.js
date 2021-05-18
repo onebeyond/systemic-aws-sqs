@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+
 const startSQSComponent = require("../helpers/startSQSComponent");
 const createSQSQueue = require("../helpers/createSQSQueue");
 const deleteSQSQueue = require("../helpers/deleteSQSQueue");
@@ -8,6 +10,8 @@ let sqs;
 let createQueue;
 let deleteQueue;
 
+const awsAccountId = "000000000000";
+
 describe("Systemic sqs Component Tests", () => {
   beforeAll(async () => {
     sqs = await startSQSComponent(getLocalstackConfig());
@@ -15,16 +19,24 @@ describe("Systemic sqs Component Tests", () => {
     deleteQueue = deleteSQSQueue(sqs);
   });
 
-  it("should return queue url", async () => {
-    const awsAccountId = "000000000000";
-    const queueName = "testQName";
+  it("send a message", async () => {
+    const messageBody = "esto es un mensaje";
+    const queueName = "testQName1";
     await createQueue(queueName);
-
-    const res = await sqs.getQueueUrl({
+    const queueUrl = await sqs.getQueueUrl({
       queueName,
       awsAccountId,
     });
-    expect(res).toBe(`https://localhost/${awsAccountId}/${queueName}`);
+    const res = await sqs.sendMessage({
+      queueUrl,
+      messageBody,
+    });
+    const md5MessageBodySent = crypto
+      .createHash("md5")
+      .update(messageBody)
+      .digest("hex");
+    expect(res.$metadata.httpStatusCode).toBe(200); //enviado
+    expect(res.MD5OfMessageBody).toBe(md5MessageBodySent); // comprobación de md5
 
     await deleteQueue(queueName);
   });
