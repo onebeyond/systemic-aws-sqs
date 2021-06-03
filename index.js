@@ -14,6 +14,7 @@ module.exports = () => {
       client,
       getQueueUrl: commands["getQueueUrl"](client),
       sendMessage: commands["sendMessage"](client),
+      receiveMessage: commands["receiveMessage"](client),
     };
   };
 
