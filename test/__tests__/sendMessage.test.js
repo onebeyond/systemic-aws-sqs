@@ -20,7 +20,7 @@ describe("Systemic sqs Component Tests", () => {
   });
 
   it("send a message", async () => {
-    const messageBody = "esto es un mensaje";
+    const messageBody = "Example message";
     const queueName = "testQName1";
     await createQueue(queueName);
     const queueUrl = await sqs.getQueueUrl({
