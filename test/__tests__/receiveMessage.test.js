@@ -1,5 +1,3 @@
-const crypto = require("crypto");
-
 const startSQSComponent = require("../helpers/startSQSComponent");
 const createSQSQueue = require("../helpers/createSQSQueue");
 const deleteSQSQueue = require("../helpers/deleteSQSQueue");
@@ -19,24 +17,23 @@ describe("Systemic sqs Component Tests", () => {
     deleteQueue = deleteSQSQueue(sqs);
   });
 
-  it("send a message", async () => {
+  it("should receive a message from the queue", async () => {
     const messageBody = "Example message";
-    const queueName = "testQName1";
+    const queueName = "receiveMessageQueueName";
     await createQueue(queueName);
     const queueUrl = await sqs.getQueueUrl({
       queueName,
       awsAccountId,
     });
-    const res = await sqs.sendMessage({
+    await sqs.sendMessage({
       queueUrl,
       messageBody,
     });
-    const md5MessageBodySent = crypto
-      .createHash("md5")
-      .update(messageBody)
-      .digest("hex");
-    expect(res.$metadata.httpStatusCode).toBe(200); //enviado
-    expect(res.MD5OfMessageBody).toBe(md5MessageBodySent); // comprobación de md5
+    const res = await sqs.receiveMessage({
+      queueUrl,
+    });
+    expect(res.Messages).toHaveLength(1);
+    expect(res.Messages[0].Body).toBe(messageBody);
 
     await deleteQueue(queueName);
   });
