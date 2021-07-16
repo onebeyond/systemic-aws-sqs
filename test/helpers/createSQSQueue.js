@@ -1,3 +1,7 @@
-const { CreateQueueCommand } = require("@aws-sdk/client-sqs");
-
-module.exports = (sqs) => (queueName) => sqs.client.send(new CreateQueueCommand({ QueueName: queueName }));
+const commandConfig = (queueName) => ({
+    commandParams: {
+        QueueName: queueName
+    },
+    commandName:'createQueue'
+})
+module.exports = (sqs) => (queueName) => sqs.commandExecutor(commandConfig(queueName))
