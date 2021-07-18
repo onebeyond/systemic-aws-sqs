@@ -1,60 +1,50 @@
 const { EventEmitter } = require('events');
+const { GetQueueUrlCommand, ReceiveMessageCommand, DeleteMessageCommand } = require("@aws-sdk/client-sqs");
 const debug = require("debug")("systemic-aws-sqs");
 
 module.exports =
     (client) =>
-        () => {
+        ({
+             awsAccountId,
+             queueName,
+             processMessage,
+             pollingPeriod,
+         }) => {
             debug("Calling listenQueue");
             let timeout = null;
             const events = new EventEmitter();
             let isProcessingMessage = false;
 
-            const pollAndProcess = async ({
-                  processMessage, pollingPeriod, queueUrl
-              }) => {
+            const pollAndProcess = async (queueUrl) => {
                 isProcessingMessage = true;
 
-                const commandParams = { QueueUrl: queueUrl }
-                const data = await client.commandExecutor({
-                    commandParams,
-                    commandName: 'receiveMessage'
-                });
+                const receiveCommandParams = { QueueUrl: queueUrl }
+                const receiveMessageCommand = new ReceiveMessageCommand(receiveCommandParams);
+                const data = await client.send(receiveMessageCommand);
 
-                await processMessage(data);
+                if (data && data.Messages && data.Messages.length > 0) {
+                    await processMessage(data);
 
-                await client.commandExecutor({
-                    commandParams,
-                    commandName: 'deleteMessage'
-                });
+                    const deleteCommandParams = { QueueUrl: queueUrl, ReceiptHandle: data.Messages[0].ReceiptHandle }
+                    const deleteMessageCommand = new DeleteMessageCommand(deleteCommandParams);
+                    await client.send(deleteMessageCommand);
 
-                events.emit('messageProcessed')
+                    events.emit('messageProcessed')
+                }
 
-                schedulePolling({
-                    processMessage,
-                    pollingPeriod,
-                    queueUrl,
-                }, pollingPeriod)
+                schedulePolling(queueUrl, pollingPeriod)
 
                 isProcessingMessage = false;
             }
 
-            const schedulePolling = (pollingParams, timeout) =>
-                setTimeout(() => pollAndProcess(pollingParams), timeout);
+            const schedulePolling = (queueUrl, timeout) =>
+                setTimeout(() => pollAndProcess(queueUrl), timeout);
 
-            const start = async ({
-                awsAccountId,
-                queueName,
-                processMessage,
-                pollingPeriod,
-            }) => {
+            const start = async () => {
                 const commandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
-                const res = await client.commandExecutor({ commandParams, commandName: 'getQueueUrl' });
-
-                schedulePolling({
-                    queueUrl:  res.QueueUrl,
-                    processMessage,
-                    pollingPeriod,
-                }, 0)
+                const command = new GetQueueUrlCommand(commandParams);
+                const res = await client.send(command);
+                schedulePolling(res.QueueUrl, 0)
             }
 
             const stop = () => {

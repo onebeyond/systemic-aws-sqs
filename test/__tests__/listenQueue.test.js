@@ -1,3 +1,5 @@
+const pEvent = require('p-event');
+
 const startSQSComponent = require("../helpers/startSQSComponent");
 const createSQSQueue = require("../helpers/createSQSQueue");
 const deleteSQSQueue = require("../helpers/deleteSQSQueue");
@@ -12,7 +14,7 @@ const awsAccountId = "000000000000";
 
 const sleep = (millis) => new Promise((resolve) => setTimeout(() => resolve(), millis));
 
-describe.skip("Systemic sqs Component Tests", () => {
+describe("Systemic sqs Component Tests", () => {
   beforeAll(async () => {
     sqs = await startSQSComponent(getLocalstackConfig());
     createQueue = createSQSQueue(sqs);
@@ -22,38 +24,39 @@ describe.skip("Systemic sqs Component Tests", () => {
   it("should read a message from a queue and process it", async () => {
     const messageBody = "Example message";
     const queueName = "listenQueueQueueName";
-    const onHandleMessage = jest.fn();
+    const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const queueUrl = await sqs.getQueueUrl({
-      queueName,
-      awsAccountId,
-    });
-    await sqs.sendMessage({
-      queueUrl,
-      messageBody,
-    });
+    const getUrlCommandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
+    const urlResponse = await sqs.commandExecutor({ commandParams: getUrlCommandParams, commandName: 'getQueueUrl' });
+
+    const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
+    await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
 
     const listener = await sqs.listenQueue({
-      queueUrl,
+      queueName,
       awsAccountId,
-      onHandleMessage,
+      processMessage,
       pollingPeriod: 1000,
     });
     listener.start();
 
-    await pEvent(listener, 'messageProcessed')
+    await pEvent(listener.events, 'messageProcessed')
 
     listener.stop();
 
-    expect(onHandleMessage).toHaveBeenCalledWith('');
+    expect(processMessage).toHaveBeenCalledTimes(1);
+    expect(processMessage).toHaveBeenCalledWith(expect.objectContaining({
+      Messages: [
+          expect.objectContaining({ Body: messageBody })
+      ]}));
     await deleteQueue(queueName);
   });
 
-  it("should delete a message from the queue if it was successfully processed", async () => {
+  it.skip("should delete a message from the queue if it was successfully processed", async () => {
     const messageBody = "Example message";
     const queueName = "listenQueueQueueName";
-    const onHandleMessage = jest.fn();
+    const processMessage = jest.fn();
     await createQueue(queueName);
 
     const queueUrl = await sqs.getQueueUrl({
@@ -68,12 +71,12 @@ describe.skip("Systemic sqs Component Tests", () => {
     const listener = await sqs.listenQueue({
       queueUrl,
       awsAccountId,
-      onHandleMessage,
+      processMessage,
       pollingPeriod: 1000,
     });
     listener.start();
 
-    await pEvent(listener, 'messageProcessed')
+    await pEvent(listener.events, 'messageProcessed')
 
     listener.stop();
 
@@ -85,16 +88,16 @@ describe.skip("Systemic sqs Component Tests", () => {
     await deleteQueue(queueName);
   });
 
-  it("should process a message that was eventually inserted in the queue", async () => {
+  it.skip("should process a message that was eventually inserted in the queue", async () => {
     const messageBody = "Example message";
     const queueName = "listenQueueQueueName";
-    const onHandleMessage = jest.fn();
+    const processMessage = jest.fn();
     await createQueue(queueName);
 
     const listener = await sqs.listenQueue({
       queueUrl,
       awsAccountId,
-      onHandleMessage,
+      processMessage,
       pollingPeriod: 1000,
     });
     listener.start();
@@ -110,18 +113,18 @@ describe.skip("Systemic sqs Component Tests", () => {
       messageBody,
     });
 
-    await pEvent(listener, 'messageProcessed')
+    await pEvent(listener.events, 'messageProcessed')
 
     listener.stop();
 
-    expect(onHandleMessage).toHaveBeenCalledWith('');
+    expect(processMessage).toHaveBeenCalledWith('');
     await deleteQueue(queueName);
   });
 
-  it("should not process any queue message after stopping listening", async () => {
+  it.skip("should not process any queue message after stopping listening", async () => {
     const messageBody = "Example message";
     const queueName = "listenQueueQueueName";
-    const onHandleMessage = jest.fn();
+    const processMessage = jest.fn();
     await createQueue(queueName);
 
     const sleep = (millis) => new Promise((resolve) => setTimeout(() => resolve(), millis));
@@ -129,7 +132,7 @@ describe.skip("Systemic sqs Component Tests", () => {
     const listener = await sqs.listenQueue({
       queueUrl,
       awsAccountId,
-      onHandleMessage,
+      processMessage,
       pollingPeriod: 1000,
     });
 
