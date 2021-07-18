@@ -1,36 +1,71 @@
 const { EventEmitter } = require('events');
 const debug = require("debug")("systemic-aws-sqs");
 
-const pollAndProcess = async ({
-      client, events, timeout, processMessage, pollingPeriod
-                              }) => {
-    const data = await client.commandExecutor({});
-    await processMessage(data);
-    await client.commandExecutor({});
-    timeout = setTimeout(() => pollAndProcess(
-        { client, events, timeout, processMessage, pollingPeriod }
-        ),pollingPeriod
-    )
-}
-
-const start = ({ client, events, timeout }) => async ({ processMessage, pollingPeriod }) => pollAndProcess(
-    { client, events, timeout, processMessage, pollingPeriod }
-)
-
-const stop = ({ client, events }) =>  () => {
-
-}
-
 module.exports =
     (client) =>
         () => {
             debug("Calling listenQueue");
+            let timeout = null;
+            const events = new EventEmitter();
+            let isProcessingMessage = false;
+
+            const pollAndProcess = async ({
+                  processMessage, pollingPeriod, queueUrl
+              }) => {
+                isProcessingMessage = true;
+
+                const commandParams = { QueueUrl: queueUrl }
+                const data = await client.commandExecutor({
+                    commandParams,
+                    commandName: 'receiveMessage'
+                });
+
+                await processMessage(data);
+
+                await client.commandExecutor({
+                    commandParams,
+                    commandName: 'deleteMessage'
+                });
+
+                events.emit('messageProcessed')
+
+                schedulePolling({
+                    processMessage,
+                    pollingPeriod,
+                    queueUrl,
+                }, pollingPeriod)
+
+                isProcessingMessage = false;
+            }
+
+            const schedulePolling = (pollingParams, timeout) =>
+                setTimeout(() => pollAndProcess(pollingParams), timeout);
+
+            const start = async ({
+                awsAccountId,
+                queueName,
+                processMessage,
+                pollingPeriod,
+            }) => {
+                const commandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
+                const res = await client.commandExecutor({ commandParams, commandName: 'getQueueUrl' });
+
+                schedulePolling({
+                    queueUrl:  res.QueueUrl,
+                    processMessage,
+                    pollingPeriod,
+                }, 0)
+            }
+
+            const stop = () => {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+            }
             try {
-                let timeout = null;
-                const events = new EventEmitter();
                 return {
-                    start: start({ client, events, timeout }),
-                    stop: stop({ client, events, timeout }),
+                    start,
+                    stop,
                     events
                 }
             } catch (error) {
