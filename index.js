@@ -1,20 +1,20 @@
 const debug = require("debug")("systemic-aws-sqs");
-const { SQSClient } = require("@aws-sdk/client-sqs");
+const { SQS, SQSClient } = require("@aws-sdk/client-sqs");
 
 const commands = require("require-all")(__dirname + "/commands");
 
 let client = null;
+let aggregatedSQS = null;
 
 module.exports = () => {
   const start = async ({ config }) => {
     debug("Initializing SQSClient");
     client = new SQSClient(config);
+    aggregatedSQS = new SQS(config);
 
     return {
       client,
-      getQueueUrl: commands["getQueueUrl"](client),
-      sendMessage: commands["sendMessage"](client),
-      receiveMessage: commands["receiveMessage"](client),
+      commandExecutor: commands['commandExecutor'](aggregatedSQS),
     };
   };
 
