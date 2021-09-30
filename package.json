@@ -1,6 +1,6 @@
 {
   "name": "@guidesmiths/systemic-aws-sqs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A systemic component for AWS SQS service",
   "main": "index.js",
   "scripts": {
