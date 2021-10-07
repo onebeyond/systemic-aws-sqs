@@ -10,10 +10,10 @@ A typical, simple configuration looks like this:
 
 ```json
 {
-  region: 'us-east-1',
-  credentials: {
-    secretAccessKey: 'test',
-    accessKeyId: 'test'
+  "region": "us-east-1",
+  "credentials": {
+    "secretAccessKey": "test",
+    "accessKeyId": "test"
   }
 }
 ```
@@ -62,12 +62,7 @@ In the future, this component will also expose some custom commands which are no
 
 ### How to test it
 
-Set up / tear down local resources running:
-
-```bash
-npm run infra:up
-npm run infra:down
-```
+You can test the whole test suite running one of these commands:
 
 Once resources are up you can test the component running one of this commands:
 
@@ -77,4 +72,10 @@ npm run test
 
 # tests will be executed every time code changes (useful when coding)
 npm run test:watch
+```
+In case that you want to just execute a certain test case, you can also use these scripts to up / tear down the infra.
+
+```bash
+npm run infra:up
+npm run infra:down
 ```
