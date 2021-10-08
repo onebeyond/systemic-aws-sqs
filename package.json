@@ -1,36 +1,44 @@
 {
-  "name": "@guidesmiths/systemic-aws-sqs",
-  "version": "1.0.1",
-  "description": "A systemic component for AWS SQS service",
-  "main": "index.js",
-  "scripts": {
-    "infra:up": "docker-compose --file ./docker/test/docker-compose.yaml pull && docker-compose --file ./docker/test/docker-compose.yaml up -d --force-recreate",
-    "infra:down": "docker-compose --file ./docker/test/docker-compose.yaml down",
-    "test": "NODE_ENV=test jest",
-    "test:watch": "NODE_ENV=test jest --watchAll",
-    "prepare": "husky install"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/guidesmiths/systemic-aws-sqs.git"
-  },
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/guidesmiths/systemic-aws-sqs/issues"
-  },
-  "homepage": "https://github.com/guidesmiths/systemic-aws-sqs#readme",
-  "dependencies": {
-    "@aws-sdk/client-sqs": "^3.13.0",
-    "debug": "^4.3.1",
-    "require-all": "^3.0.0"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^13.2.0",
-    "@commitlint/config-conventional": "^13.2.0",
-    "husky": "^7.0.0",
-    "jest": "^26.6.3",
-    "jest-watch-typeahead": "^0.6.2",
-    "wait-on": "^5.3.0"
-  }
+	"name": "@guidesmiths/systemic-aws-sqs",
+	"version": "1.0.1",
+	"description": "A systemic component for AWS SQS service",
+	"main": "index.js",
+	"scripts": {
+		"infra:up": "docker-compose --file ./docker/test/docker-compose.yaml pull && docker-compose --file ./docker/test/docker-compose.yaml up -d --force-recreate",
+		"infra:down": "docker-compose --file ./docker/test/docker-compose.yaml down",
+		"test": "NODE_ENV=test jest",
+		"test:watch": "NODE_ENV=test jest --watchAll",
+		"eslint": "eslint . --ext .js,.jsx --config .eslintrc.json --ignore-path .eslintignore --cache",
+		"eslint:fix": "eslint . --ext .js,.jsx --fix",
+		"lint": "npm run eslint",
+		"prepare": "husky install"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/guidesmiths/systemic-aws-sqs.git"
+	},
+	"author": "",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/guidesmiths/systemic-aws-sqs/issues"
+	},
+	"homepage": "https://github.com/guidesmiths/systemic-aws-sqs#readme",
+	"dependencies": {
+		"@aws-sdk/client-sqs": "^3.13.0",
+		"debug": "^4.3.1",
+		"require-all": "^3.0.0"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^13.2.0",
+		"@commitlint/config-conventional": "^13.2.0",
+		"eslint": "^7.32.0",
+		"eslint-config-standard": "^16.0.3",
+		"eslint-plugin-import": "^2.24.2",
+		"eslint-plugin-node": "^11.1.0",
+		"eslint-plugin-promise": "^5.1.0",
+		"husky": "^7.0.0",
+		"jest": "^26.6.3",
+		"jest-watch-typeahead": "^0.6.2",
+		"wait-on": "^5.3.0"
+	}
 }
