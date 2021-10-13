@@ -1,3 +1,4 @@
+const pEvent = require('p-event');
 const { EventEmitter } = require('events');
 const { GetQueueUrlCommand, ReceiveMessageCommand, DeleteMessageCommand } = require('@aws-sdk/client-sqs');
 const debug = require('debug')('systemic-aws-sqs');
@@ -11,46 +12,56 @@ module.exports =
         pollingPeriod
       }) => {
         debug('Calling listenQueue');
-        const timeout = null;
+        let timeout = null;
         const events = new EventEmitter();
-        // let isProcessingMessage = false;
+        let isPollingMessages = false;
+        let isClosing = false;
 
         const pollAndProcess = async (queueUrl) => {
-          // isProcessingMessage = true;
+          if (!isClosing) {
+            isPollingMessages = true;
 
-          const receiveCommandParams = { QueueUrl: queueUrl }
-          const receiveMessageCommand = new ReceiveMessageCommand(receiveCommandParams);
-          const data = await client.send(receiveMessageCommand);
+            const receiveCommandParams = { QueueUrl: queueUrl }
+            const receiveMessageCommand = new ReceiveMessageCommand(receiveCommandParams);
+            const data = await client.send(receiveMessageCommand);
 
-          if (data && data.Messages && data.Messages.length > 0) {
-            await processMessage(data);
+            if (data && data.Messages && data.Messages.length > 0) {
+              await processMessage(data);
 
-            const deleteCommandParams = { QueueUrl: queueUrl, ReceiptHandle: data.Messages[0].ReceiptHandle }
-            const deleteMessageCommand = new DeleteMessageCommand(deleteCommandParams);
-            await client.send(deleteMessageCommand);
+              const deleteCommandParams = { QueueUrl: queueUrl, ReceiptHandle: data.Messages[0].ReceiptHandle }
+              const deleteMessageCommand = new DeleteMessageCommand(deleteCommandParams);
+              await client.send(deleteMessageCommand);
 
-            events.emit('messageProcessed')
+              events.emit('messageProcessed');
+            }
+
+            schedulePolling(queueUrl, pollingPeriod);
+
+            events.emit('pollingFinished');
+            isPollingMessages = false;
           }
-
-          schedulePolling(queueUrl, pollingPeriod)
-
-          // isProcessingMessage = false;
         }
 
-        const schedulePolling = (queueUrl, timeout) =>
-          setTimeout(() => pollAndProcess(queueUrl), timeout);
+        const schedulePolling = (queueUrl, ms) => { timeout = setTimeout(() => pollAndProcess(queueUrl), ms); }
 
         const start = async () => {
-          const commandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
+          isClosing = false;
+          isPollingMessages = false;
+          const commandParams = { QueueName: queueName, AwsAccountId: awsAccountId };
           const command = new GetQueueUrlCommand(commandParams);
           const res = await client.send(command);
-          schedulePolling(res.QueueUrl, 0)
+          schedulePolling(res.QueueUrl, 0);
         }
 
-        const stop = () => {
+        const stop = async () => {
+          isClosing = true;
+          if (isPollingMessages) {
+            await pEvent(events, 'pollingFinished');
+          }
           if (timeout) {
             clearTimeout(timeout);
           }
+          isClosing = false;
         }
         try {
           return {
