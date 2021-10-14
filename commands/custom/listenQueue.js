@@ -5,7 +5,7 @@ const debug = require('debug')('systemic-aws-sqs');
 
 module.exports =
     (client) =>
-      ({
+      async ({
         awsAccountId,
         queueName,
         processMessage,
