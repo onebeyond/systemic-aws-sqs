@@ -17,39 +17,50 @@ module.exports =
         let isPollingMessages = false;
         let isClosing = false;
 
+        const receiveMessage = (queueUrl) => {
+          const receiveCommandParams = { QueueUrl: queueUrl }
+          const receiveMessageCommand = new ReceiveMessageCommand(receiveCommandParams);
+          return client.send(receiveMessageCommand);
+        }
+
+        const deleteMessage = (queueUrl, receiptHandle) => {
+          const deleteCommandParams = { QueueUrl: queueUrl, ReceiptHandle: receiptHandle }
+          const deleteMessageCommand = new DeleteMessageCommand(deleteCommandParams);
+          return client.send(deleteMessageCommand);
+        }
+
+        const getQueueUrl = (_queueName, _awsAccountId) => {
+          const commandParams = { QueueName: _queueName, AwsAccountId: awsAccountId };
+          const command = new GetQueueUrlCommand(commandParams);
+          return client.send(command);
+        }
+
         const pollAndProcess = async (queueUrl) => {
           if (!isClosing) {
             isPollingMessages = true;
 
-            const receiveCommandParams = { QueueUrl: queueUrl }
-            const receiveMessageCommand = new ReceiveMessageCommand(receiveCommandParams);
-            const data = await client.send(receiveMessageCommand);
+            const data = await receiveMessage(queueUrl);
 
             if (data && data.Messages && data.Messages.length > 0) {
               await processMessage(data);
-
-              const deleteCommandParams = { QueueUrl: queueUrl, ReceiptHandle: data.Messages[0].ReceiptHandle }
-              const deleteMessageCommand = new DeleteMessageCommand(deleteCommandParams);
-              await client.send(deleteMessageCommand);
-
+              await deleteMessage(queueUrl, data.Messages[0].ReceiptHandle);
               events.emit('messageProcessed');
             }
 
             schedulePolling(queueUrl, pollingPeriod);
-
             events.emit('pollingFinished');
             isPollingMessages = false;
           }
         }
 
-        const schedulePolling = (queueUrl, ms) => { timeout = setTimeout(() => pollAndProcess(queueUrl), ms); }
+        const schedulePolling = (queueUrl, ms) => {
+          timeout = setTimeout(() => pollAndProcess(queueUrl), ms);
+        }
 
         const start = async () => {
           isClosing = false;
           isPollingMessages = false;
-          const commandParams = { QueueName: queueName, AwsAccountId: awsAccountId };
-          const command = new GetQueueUrlCommand(commandParams);
-          const res = await client.send(command);
+          const res = await getQueueUrl(queueName, awsAccountId);
           schedulePolling(res.QueueUrl, 0);
         }
 
@@ -60,6 +71,7 @@ module.exports =
           }
           if (timeout) {
             clearTimeout(timeout);
+            timeout = null;
           }
           isClosing = false;
         }
