@@ -1,11 +1,13 @@
 const pEvent = require('p-event');
 
-const startSQSComponent = require("../helpers/startSQSComponent");
-const createSQSQueue = require("../helpers/createSQSQueue");
-const deleteSQSQueue = require("../helpers/deleteSQSQueue");
-const getSQSQueueUrl = require("../helpers/getSQSQueueUrl");
-const sendSQSMessage = require("../helpers/sendSQSMessage");
-const receiveSQSMessage = require("../helpers/receiveSQSMessage");
+const {
+  startSQSComponent,
+  createSQSQueue,
+  deleteSQSQueue,
+  getSQSQueueUrl,
+  sendSQSMessage,
+  receiveSQSMessage
+} = require("../helpers");
 
 const getLocalstackConfig = require("../fixtures/getLocalstackConfig");
 
@@ -19,6 +21,15 @@ let receiveMessage;
 const awsAccountId = "000000000000";
 
 const sleep = (millis) => new Promise((resolve) => setTimeout(() => resolve(), millis));
+
+const getListenQueueParams = (queueName, awsAccountId, processMessage) => ({
+  commandParams: {
+    queueName,
+    awsAccountId,
+    processMessage,
+  },
+  commandName: 'listenQueue'
+})
 
 describe("Systemic sqs Component Tests", () => {
   beforeAll(async () => {
@@ -39,15 +50,7 @@ describe("Systemic sqs Component Tests", () => {
     const urlResponse = await getQueueUrl(queueName, awsAccountId);
     await sendMessage(urlResponse.QueueUrl, messageBody);
 
-    const listener = await sqs.commandExecutor({
-      commandParams: {
-        queueName,
-        awsAccountId,
-        processMessage,
-        pollingPeriod: 1000,
-      },
-      commandName: 'listenQueue'
-    })
+    const listener = await sqs.commandExecutor(getListenQueueParams(queueName, awsAccountId, processMessage))
 
     await listener.start();
     await pEvent(listener.events, 'messageProcessed')
@@ -70,15 +73,7 @@ describe("Systemic sqs Component Tests", () => {
     const urlResponse = await getQueueUrl(queueName, awsAccountId);
     await sendMessage(urlResponse.QueueUrl, messageBody);
 
-    const listener = await sqs.commandExecutor({
-      commandParams: {
-        queueName,
-        awsAccountId,
-        processMessage,
-        pollingPeriod: 1000,
-      },
-      commandName: 'listenQueue'
-    });
+    const listener = await sqs.commandExecutor(getListenQueueParams(queueName, awsAccountId, processMessage))
 
     await listener.start();
     await pEvent(listener.events, 'messageProcessed')
@@ -96,15 +91,7 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const listener = await sqs.commandExecutor({
-      commandParams: {
-        queueName,
-        awsAccountId,
-        processMessage,
-        pollingPeriod: 1000,
-      },
-      commandName: 'listenQueue'
-    });
+    const listener = await sqs.commandExecutor(getListenQueueParams(queueName, awsAccountId, processMessage))
 
     await listener.start();
 
@@ -132,15 +119,7 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const listener = await sqs.commandExecutor({
-      commandParams: {
-        queueName,
-        awsAccountId,
-        processMessage,
-        pollingPeriod: 1000,
-      },
-      commandName: 'listenQueue'
-    });
+    const listener = await sqs.commandExecutor(getListenQueueParams(queueName, awsAccountId, processMessage))
 
     await listener.start();
     await listener.stop();

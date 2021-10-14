@@ -1,8 +1,11 @@
 const crypto = require("crypto");
 
-const startSQSComponent = require("../helpers/startSQSComponent");
-const createSQSQueue = require("../helpers/createSQSQueue");
-const deleteSQSQueue = require("../helpers/deleteSQSQueue");
+
+const {
+  startSQSComponent,
+  createSQSQueue,
+  deleteSQSQueue,
+} = require("../helpers");
 
 const getLocalstackConfig = require("../fixtures/getLocalstackConfig");
 
