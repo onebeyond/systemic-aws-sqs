@@ -3,12 +3,18 @@ const pEvent = require('p-event');
 const startSQSComponent = require("../helpers/startSQSComponent");
 const createSQSQueue = require("../helpers/createSQSQueue");
 const deleteSQSQueue = require("../helpers/deleteSQSQueue");
+const getSQSQueueUrl = require("../helpers/getSQSQueueUrl");
+const sendSQSMessage = require("../helpers/sendSQSMessage");
+const receiveSQSMessage = require("../helpers/receiveSQSMessage");
 
 const getLocalstackConfig = require("../fixtures/getLocalstackConfig");
 
 let sqs;
 let createQueue;
 let deleteQueue;
+let getQueueUrl;
+let sendMessage;
+let receiveMessage;
 
 const awsAccountId = "000000000000";
 
@@ -19,6 +25,9 @@ describe("Systemic sqs Component Tests", () => {
     sqs = await startSQSComponent(getLocalstackConfig());
     createQueue = createSQSQueue(sqs);
     deleteQueue = deleteSQSQueue(sqs);
+    getQueueUrl = getSQSQueueUrl(sqs);
+    sendMessage = sendSQSMessage(sqs);
+    receiveMessage = receiveSQSMessage(sqs);
   });
 
   it("should read a message from a queue and process it", async () => {
@@ -27,22 +36,21 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const getUrlCommandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
-    const urlResponse = await sqs.commandExecutor({ commandParams: getUrlCommandParams, commandName: 'getQueueUrl' });
+    const urlResponse = await getQueueUrl(queueName, awsAccountId);
+    await sendMessage(urlResponse.QueueUrl, messageBody);
 
-    const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
-    await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
-
-    const listener = await sqs.commandExecutor({ commandParams: {
+    const listener = await sqs.commandExecutor({
+      commandParams: {
         queueName,
         awsAccountId,
         processMessage,
         pollingPeriod: 1000,
-      }, commandName: 'listenQueue' });
+      },
+      commandName: 'listenQueue'
+    })
+
     await listener.start();
-
     await pEvent(listener.events, 'messageProcessed')
-
     await listener.stop();
 
     expect(processMessage).toHaveBeenCalledTimes(1);
@@ -59,26 +67,24 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const getUrlCommandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
-    const urlResponse = await sqs.commandExecutor({ commandParams: getUrlCommandParams, commandName: 'getQueueUrl' });
+    const urlResponse = await getQueueUrl(queueName, awsAccountId);
+    await sendMessage(urlResponse.QueueUrl, messageBody);
 
-    const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
-    await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
-
-    const listener = await sqs.commandExecutor({ commandParams: {
+    const listener = await sqs.commandExecutor({
+      commandParams: {
         queueName,
         awsAccountId,
         processMessage,
         pollingPeriod: 1000,
-      }, commandName: 'listenQueue' });
+      },
+      commandName: 'listenQueue'
+    });
+
     await listener.start();
-
     await pEvent(listener.events, 'messageProcessed')
-
     await listener.stop();
 
-    const receiveMessageCommandParams = { QueueUrl: urlResponse.QueueUrl }
-    const res = await sqs.commandExecutor({ commandParams: receiveMessageCommandParams, commandName: 'receiveMessage' });
+    const res = await receiveMessage(urlResponse.QueueUrl)
     expect(res.Messages).toBeUndefined();
 
     await deleteQueue(queueName);
@@ -90,21 +96,22 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const listener = await sqs.commandExecutor({ commandParams: {
+    const listener = await sqs.commandExecutor({
+      commandParams: {
         queueName,
         awsAccountId,
         processMessage,
         pollingPeriod: 1000,
-      }, commandName: 'listenQueue' });
+      },
+      commandName: 'listenQueue'
+    });
+
     await listener.start();
 
     await sleep(2000);
 
-    const getUrlCommandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
-    const urlResponse = await sqs.commandExecutor({ commandParams: getUrlCommandParams, commandName: 'getQueueUrl' });
-
-    const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
-    await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
+    const urlResponse = await getQueueUrl(queueName, awsAccountId);
+    await sendMessage(urlResponse.QueueUrl, messageBody);
 
     await pEvent(listener.events, 'messageProcessed')
 
@@ -125,26 +132,25 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const listener = await sqs.commandExecutor({ commandParams: {
+    const listener = await sqs.commandExecutor({
+      commandParams: {
         queueName,
         awsAccountId,
         processMessage,
         pollingPeriod: 1000,
-      }, commandName: 'listenQueue' });
+      },
+      commandName: 'listenQueue'
+    });
 
     await listener.start();
     await listener.stop();
 
-    const getUrlCommandParams = { QueueName: queueName, AwsAccountId: awsAccountId }
-    const urlResponse = await sqs.commandExecutor({ commandParams: getUrlCommandParams, commandName: 'getQueueUrl' });
-
-    const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
-    await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
+    const urlResponse = await getQueueUrl(queueName, awsAccountId);
+    await sendMessage(urlResponse.QueueUrl, messageBody);
 
     await sleep(2000);
 
-    const receiveMessageCommandParams = { QueueUrl: urlResponse.QueueUrl }
-    const res = await sqs.commandExecutor({ commandParams: receiveMessageCommandParams, commandName: 'receiveMessage' });
+    const res = await receiveMessage(urlResponse.QueueUrl)
     expect(res.Messages).toHaveLength(1);
 
     await deleteQueue(queueName);
