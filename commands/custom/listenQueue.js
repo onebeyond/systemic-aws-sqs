@@ -9,7 +9,7 @@ module.exports =
         awsAccountId,
         queueName,
         processMessage,
-        pollingPeriod
+        pollingPeriod = 1000
       }) => {
         debug('Calling listenQueue');
         let timeout = null;

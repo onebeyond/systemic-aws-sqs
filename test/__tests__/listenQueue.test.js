@@ -33,12 +33,12 @@ describe("Systemic sqs Component Tests", () => {
     const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
     await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
 
-    const listener = await sqs.listenQueue({
-      queueName,
-      awsAccountId,
-      processMessage,
-      pollingPeriod: 1000,
-    });
+    const listener = await sqs.commandExecutor({ commandParams: {
+        queueName,
+        awsAccountId,
+        processMessage,
+        pollingPeriod: 1000,
+      }, commandName: 'listenQueue' });
     await listener.start();
 
     await pEvent(listener.events, 'messageProcessed')
@@ -65,12 +65,12 @@ describe("Systemic sqs Component Tests", () => {
     const sendMessageCommandParams = { QueueUrl: urlResponse.QueueUrl, MessageBody: messageBody }
     await sqs.commandExecutor({ commandParams: sendMessageCommandParams, commandName: 'sendMessage' });
 
-    const listener = await sqs.listenQueue({
-      queueName,
-      awsAccountId,
-      processMessage,
-      pollingPeriod: 1000,
-    });
+    const listener = await sqs.commandExecutor({ commandParams: {
+        queueName,
+        awsAccountId,
+        processMessage,
+        pollingPeriod: 1000,
+      }, commandName: 'listenQueue' });
     await listener.start();
 
     await pEvent(listener.events, 'messageProcessed')
@@ -90,12 +90,12 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const listener = await sqs.listenQueue({
-      queueName,
-      awsAccountId,
-      processMessage,
-      pollingPeriod: 1000,
-    });
+    const listener = await sqs.commandExecutor({ commandParams: {
+        queueName,
+        awsAccountId,
+        processMessage,
+        pollingPeriod: 1000,
+      }, commandName: 'listenQueue' });
     await listener.start();
 
     await sleep(2000);
@@ -125,12 +125,12 @@ describe("Systemic sqs Component Tests", () => {
     const processMessage = jest.fn();
     await createQueue(queueName);
 
-    const listener = await sqs.listenQueue({
-      queueName,
-      awsAccountId,
-      processMessage,
-      pollingPeriod: 1000,
-    });
+    const listener = await sqs.commandExecutor({ commandParams: {
+        queueName,
+        awsAccountId,
+        processMessage,
+        pollingPeriod: 1000,
+      }, commandName: 'listenQueue' });
 
     await listener.start();
     await listener.stop();

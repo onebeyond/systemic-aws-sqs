@@ -15,8 +15,7 @@ module.exports = () => {
 
     return {
       client,
-      commandExecutor: commands.commandExecutor(aggregatedSQS),
-      listenQueue: commands.listenQueue(client)
+      commandExecutor: commands.commandExecutor(aggregatedSQS)
     };
   };
 
