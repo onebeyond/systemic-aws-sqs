@@ -11,7 +11,12 @@
 		"eslint": "eslint . --ext .js,.jsx --config .eslintrc.json --ignore-path .eslintignore --cache",
 		"eslint:fix": "eslint . --ext .js,.jsx --fix",
 		"lint": "npm run eslint",
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"release": "standard-version",
+		"release:major": "npm run release -- --release-as major",
+		"release:minor": "npm run release -- --release-as minor",
+		"release:patch": "npm run release -- --release-as patch",
+		"release:alpha": "npm run release -- --prerelease alpha"
 	},
 	"repository": {
 		"type": "git",
@@ -40,6 +45,7 @@
 		"husky": "^7.0.0",
 		"jest": "^26.6.3",
 		"jest-watch-typeahead": "^0.6.2",
+		"standard-version": "^9.3.1",
 		"wait-on": "^5.3.0"
 	}
 }
