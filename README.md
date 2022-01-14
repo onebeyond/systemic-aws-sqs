@@ -54,9 +54,61 @@ const res = await api.commandExecutor(createSQSQueue);
 
 You can check all the available commands [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-sqs/classes/sqs.html).
 
-### Custom commands
+## Custom commands
 
-In the future, this component will also expose some custom commands which are not supported by the official API.
+Here is the current list of the custom commands that extends the SQS sdk functionality
+
+### ListenQueue
+
+This command will execute a repeated polling of messages in the queue. This iterative polling process will last until it is explicitly stopped.
+
+This command requires the following parameters: 
+
+| Name | Type | Required | Default Value | Description |
+|:----:|:----:|:--------:|:-------------:|:-----------:|
+|awsAccountId  |  string | Yes | - | Id of the AWS account who owns the SQS queue |
+|queueName  |  string | Yes | - | Name of the queue to listen to |
+|processMessage  | async function | yes | - | Function to execute when a message is received from the queue. This function will receive the message as input  |
+|queueName  |  string | Yes | - | Name of the queue to listen to |
+|pollingPeriod  | number | No | 1000 | Milliseconds between each polling process |
+
+#### Returned Object
+
+The `listenQueue` command will return an object with the following fields: 
+- `start(): Promise<null>` once it is called, the listener will start polling messages from the queue.
+- `stop(): Promise<null>` it will stop from polling messages from the queue. In case a polling is currently in process, it will wait until it finishes
+- `events` an `EventEmitter` object that will emit the following events:
+    - `messageProcessed` when a message is processed.
+    - `pollingFinished` when a polling processed has been completed, even if a message was received or not.
+    
+`events` field is very useful for testing purposes and for some custom actions.
+
+#### Code example
+
+```js
+const awsAccountId = '000000000000'
+const queueName = 'test-service_v1_test-event'
+const processMessage = (message) => console.log(message)
+const pollingPeriod = 1000
+
+const listener = await sqs.commandExecutor({
+  commandParams: {
+    queueName,
+    awsAccountId,
+    processMessage,
+    pollingPeriod
+  },
+  commandName: 'listenQueue'
+})
+
+await listener.start()  // starting listening to the queue
+
+// Printing all messages in the queue in console
+
+await listener.stop()  // stop listening to the queue
+
+// No more messages printed
+```
 
 ## Guide for developers
 
