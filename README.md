@@ -1,3 +1,7 @@
+# ⚠️ This repository is not longer maintained ⚠️
+
+This project is not longer maintained and has been archived. More details in [One Beyond Governance Tiers](https://onebeyond-maintainers.netlify.app/governance/tiers)
+
 # Systemic AWS SQS
 
 A [Systemic](https://guidesmiths.github.io/systemic/#/) component for the [AWS SQS SDK v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/index.html).
